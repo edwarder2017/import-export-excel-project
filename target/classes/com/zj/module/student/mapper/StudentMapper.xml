@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace命名空间，作用就是对sql进行分类化管理，理解sql隔离 
+注意：使用mapper代理方法开发，namespace有特殊重要的作用，namespace等于mapper接口地址
+-->
+<mapper namespace="com.zj.module.student.mapper.StudentMapper">
+
+	<select id="findListByCondition" resultType="com.zj.module.student.entity.Student" 
+			parameterType="com.zj.module.student.vo.StudentVO">
+		SELECT * FROM s_student 
+		<where>
+			delFlag = '0'
+			<if test="student != null and student.name != null and student.name != ''">
+				<!-- and name LIKE '%${student.name}%' -->
+				and name LIKE '%'||#{student.name}||'%'
+			</if>
+			
+		</where>
+	</select>
+	
+	<!-- 保存学生对象 -->
+	<insert id="save" parameterType="com.zj.module.student.entity.Student">
+		<selectKey keyProperty="id" order="BEFORE" resultType="java.lang.Integer">
+			SELECT SEQ_USER_ID.nextval from dual
+		</selectKey>
+		insert into s_student values(
+		#{id},
+		#{name},
+		#{age},
+		#{idNumer},
+		#{tel},
+		#{gender},
+		#{school},
+		#{speciality},
+		#{qualification},
+		#{delFlag}
+		)
+	</insert>
+	
+	<!-- <insert id="insertStudentBatch" parameterType="java.util.List">  
+	    <selectKey keyProperty="id" order="BEFORE" resultType="java.lang.Integer">
+			SELECT SEQ_USER_ID.nextval from dual
+		</selectKey>
+	    insert into s_student (name,age,idNumber,tel,gender,school,speciality,qualification,delFlag)  
+	    values  
+	    <foreach collection="list" item="item" index="index" separator="," >  
+	        (#{item.name},#{item.age},#{item.idNumber},#{item.tel},#{item.gender},#{item.school},#{item.speciality},#{item.qualification},#{item.delFlag})  
+	    </foreach>  
+	</insert> -->
+	<insert id="insertStudentBatch" parameterType="java.util.List">
+	    INSERT INTO s_student(
+	    id,name,age,idNumber,tel,gender,school,speciality,qualification,delFlag
+	    )
+	    select SEQ_USER_ID.nextval,cd.* from(
+	    <foreach collection="list" item="item" index="index"  close=")" open="(" separator="union">
+	        select
+	        #{item.name},
+	        #{item.age},
+	        #{item.idNumber},
+	        #{item.tel},
+	        #{item.gender},
+	        #{item.school},
+	        #{item.speciality},
+	        #{item.qualification},
+	        #{item.delFlag}
+	        from dual
+	    </foreach>
+	    ) cd
+	</insert>  
+</mapper>
+
+
